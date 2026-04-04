@@ -134,6 +134,33 @@ def validate_args(args: argparse.Namespace) -> tuple[bool, str | None, int]:
     return True, None, EXIT_SUCCESS
 
 
+def _parse_min_image_size(size_str: str) -> tuple[int, int]:
+    """Parse min-image-size string (WxH) into tuple.
+
+    Args:
+        size_str: Size string like "50x50"
+
+    Returns:
+        Tuple of (width, height)
+    """
+    width, height = size_str.split("x")
+    return int(width), int(height)
+
+
+def _has_scan_pages(analysis) -> bool:
+    """Check if any pages require OCR.
+
+    Args:
+        analysis: DocumentAnalysis from analyser.py
+
+    Returns:
+        True if any pages are in SCAN mode
+    """
+    from pdf2md.analyser import PageMode  # noqa: PLC0415
+
+    return any(page.mode == PageMode.SCAN for page in analysis.pages)
+
+
 def main(args: list[str] | None = None) -> int:
     """Main entry point for pdf2md CLI.
 
@@ -154,24 +181,167 @@ def main(args: list[str] | None = None) -> int:
         logger.error(error_message)
         return exit_code
 
-    # Log start message
-    logger.debug(f"Input: {parsed_args.input}")
-    logger.debug(f"Output: {parsed_args.output or 'auto'}")
-    logger.debug(f"Output dir: {parsed_args.output_dir or 'not set'}")
-    logger.debug(f"OCR language: {parsed_args.ocr_lang}")
-    logger.debug(f"Skip OCR: {parsed_args.skip_ocr}")
-    logger.debug(f"Min image size: {parsed_args.min_image_size}")
+    # Parse min-image-size
+    min_width, min_height = _parse_min_image_size(parsed_args.min_image_size)
 
-    # TODO: Implement conversion logic
-    # - Phase 2: PDF Analysis Engine
-    # - Phase 3: OCR Module
-    # - Phase 4: Markdown Builder
-    # - Phase 5: Output Module
+    try:
+        # Import modules (lazy to avoid startup cost)
+        from pdf2md.analyser import analyze_pdf  # noqa: PLC0415
+        from pdf2md.images import extract_images  # noqa: PLC0415
+        from pdf2md.ocr import OCREngine  # noqa: PLC0415
+        from pdf2md.builder import MarkdownBuilder  # noqa: PLC0415
+        from pdf2md.output import OutputWriter  # noqa: PLC0415
 
-    logger.info("pdf2md conversion not yet implemented.")
-    logger.info("Coming in Phase 2: PDF Analysis Engine")
+        # Step 1: Analyze PDF
+        logger.info(f"Reading: {parsed_args.input}")
+        analysis = analyze_pdf(parsed_args.input)
 
-    return EXIT_SUCCESS
+        input_path = Path(parsed_args.input)
+        file_size_mb = analysis.file_size_bytes / (1024 * 1024)
+        logger.info(
+            f"  {input_path.name} "
+            f"({file_size_mb:.1f} MB, {analysis.total_pages} pages)"
+        )
+
+        # Log per-page detection
+        for page in analysis.pages:
+            from pdf2md.analyser import PageMode  # noqa: PLC0415
+
+            if page.mode == PageMode.TEXT:
+                logger.info(
+                    f"  Page {page.page_number}/{analysis.total_pages}: "
+                    f"text layer detected"
+                )
+            else:
+                logger.info(
+                    f"  Page {page.page_number}/{analysis.total_pages}: "
+                    f"no text layer — running OCR..."
+                )
+
+        # Step 2: Extract images
+        images = []
+        try:
+            import fitz  # noqa: PLC0415
+
+            with fitz.open(parsed_args.input) as doc:
+                images = extract_images(doc, min_width, min_height)
+        except Exception as e:
+            logger.error(f"Image extraction failed: {e}")
+            return EXIT_CONVERSION_FAILURE
+
+        if images:
+            logger.info(
+                f"  Extracting images: {len(images)} found, "
+                f"all above threshold ({min_width}x{min_height} px)"
+            )
+        else:
+            logger.info("  Extracting images: none found")
+
+        # Step 3: OCR (if needed and not skipped)
+        ocr_results = {}
+        if not parsed_args.skip_ocr and _has_scan_pages(analysis):
+            logger.info("  Running OCR on scanned pages...")
+            try:
+                ocr_engine = OCREngine(lang=parsed_args.ocr_lang)
+            except RuntimeError as e:
+                logger.error(f"OCR engine failed to initialise: {e}")
+                return EXIT_OCR_MODEL_NOT_FOUND
+            except Exception as e:
+                logger.error(f"Unexpected error initialising OCR: {e}")
+                return EXIT_OCR_MODEL_NOT_FOUND
+
+            # Process each SCAN page
+            for page in analysis.pages:
+                from pdf2md.analyser import PageMode  # noqa: PLC0415
+
+                if page.mode == PageMode.SCAN and page.pixmap is not None:
+                    try:
+                        ocr_result = ocr_engine.process_pixmap(
+                            page.pixmap,
+                            page.page_number,
+                        )
+                        ocr_results[page.page_number] = ocr_result
+                    except Exception as e:
+                        logger.warning(
+                            f"  Page {page.page_number}: OCR failed: {e}"
+                        )
+
+        # Step 4: Build Markdown
+        logger.info("  Building Markdown...")
+        builder = MarkdownBuilder(
+            add_page_breaks=False,
+            max_heading_level=4,
+        )
+
+        if ocr_results:
+            markdown = builder.build_with_ocr(
+                analysis, images, ocr_results
+            )
+        else:
+            markdown = builder.build(analysis, images)
+
+        # Log build statistics
+        stats = builder.stats
+        logger.debug(
+            f"  Build stats: {stats.pages_processed} pages, "
+            f"{stats.headings_found} headings, "
+            f"{stats.lists_found} lists, "
+            f"{stats.code_blocks_found} code blocks, "
+            f"{stats.tables_found} tables, "
+            f"{stats.images_placed} images"
+        )
+
+        # Step 5: Write output
+        writer = OutputWriter(
+            output_path=parsed_args.output,
+            output_dir=parsed_args.output_dir,
+        )
+
+        # Validate output path
+        is_valid, error = writer.validate_output()
+        if not is_valid:
+            logger.error(f"Output not writable: {error}")
+            return EXIT_OUTPUT_NOT_WRITABLE
+
+        output_path = writer.write(markdown, images, parsed_args.input)
+
+        # Log completion
+        if output_path.is_file():
+            output_size_mb = output_path.stat().st_size / (1024 * 1024)
+            if output_path.suffix == ".zip":
+                logger.info(
+                    f"  Packaging output: {output_path.name} "
+                    f"({output_size_mb:.1f} MB)"
+                )
+            else:
+                logger.info(
+                    f"  Output written: {output_path.name} "
+                    f"({output_size_mb:.1f} MB)"
+                )
+        else:
+            logger.info(f"  Output written to: {output_path}")
+
+        logger.info("  Done.")
+        return EXIT_SUCCESS
+
+    except FileNotFoundError as e:
+        logger.error(f"Input file not found: {e}")
+        return EXIT_INPUT_NOT_FOUND
+
+    except RuntimeError as e:
+        if "RapidOCR" in str(e) or "rapidocr" in str(e).lower():
+            logger.error(
+                f"OCR model not found: {e}\n"
+                f"Try running with --verbose for details."
+            )
+            return EXIT_OCR_MODEL_NOT_FOUND
+        logger.error(f"Conversion failed: {e}")
+        return EXIT_CONVERSION_FAILURE
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        logger.debug("Exception details:", exc_info=True)
+        return EXIT_GENERIC_FAILURE
 
 
 if __name__ == "__main__":

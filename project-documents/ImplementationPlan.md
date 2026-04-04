@@ -26,89 +26,89 @@
 
 ### Phase 2: PDF Analysis Engine
 
-- [ ] 2.1 Implement PDF page analyser (`analyser.py`)
-  - [ ] 2.1.1 Open PDF with PyMuPDF (`fitz.open`)
-  - [ ] 2.1.2 Per-page: attempt `page.get_text("dict")` to retrieve text blocks with font metadata
-  - [ ] 2.1.3 Determine page mode: `TEXT` if extracted chars > 50 (configurable threshold), else `SCAN`
-  - [ ] 2.1.4 For SCAN pages: render to `fitz.Pixmap` at 150 DPI and pass to OCR module
-  - [ ] 2.1.5 Collect per-page result: list of text blocks with bounding boxes, font sizes, font names
-- [ ] 2.2 Implement image extractor (`images.py`)
-  - [ ] 2.2.1 Use `page.get_images(full=True)` to retrieve all embedded images
-  - [ ] 2.2.2 Filter images by pixel dimensions (default min: 50×50 px)
-  - [ ] 2.2.3 Extract image bytes via `fitz.Pixmap`, save as PNG
-  - [ ] 2.2.4 Record image bounding box (`y0`) for insertion position in Markdown
-  - [ ] 2.2.5 Name files as `page{N}_img{M}.png` (1-based page and image index)
+- [x] 2.1 Implement PDF page analyser (`analyser.py`)
+  - [x] 2.1.1 Open PDF with PyMuPDF (`fitz.open`)
+  - [x] 2.1.2 Per-page: attempt `page.get_text("dict")` to retrieve text blocks with font metadata
+  - [x] 2.1.3 Determine page mode: `TEXT` if extracted chars > 50 (configurable threshold), else `SCAN`
+  - [x] 2.1.4 For SCAN pages: render to `fitz.Pixmap` at 150 DPI and pass to OCR module
+  - [x] 2.1.5 Collect per-page result: list of text blocks with bounding boxes, font sizes, font names
+- [x] 2.2 Implement image extractor (`images.py`)
+  - [x] 2.2.1 Use `page.get_images(full=True)` to retrieve all embedded images
+  - [x] 2.2.2 Filter images by pixel dimensions (default min: 50×50 px)
+  - [x] 2.2.3 Extract image bytes via `fitz.Pixmap`, save as PNG
+  - [x] 2.2.4 Record image bounding box (`y0`) for insertion position in Markdown
+  - [x] 2.2.5 Name files as `page{N}_img{M}.png` (1-based page and image index)
 
 ### Phase 3: OCR Module
 
-- [ ] 3.1 Implement OCR wrapper (`ocr.py`)
-  - [ ] 3.1.1 Initialise RapidOCR engine (load ONNX models once at startup)
-  - [ ] 3.1.2 Accept `fitz.Pixmap` or PIL image as input
-  - [ ] 3.1.3 Return list of `(text, bbox, confidence)` tuples, sorted top-to-bottom
-  - [ ] 3.1.4 Support language hint: `en`, `ch_sim`, `ch_tra`, `auto`
-  - [ ] 3.1.5 Handle OCR errors gracefully — log warning, return empty block for page
-- [ ] 3.2 Verify CJK accuracy
-  - [ ] 3.2.1 Test Traditional Chinese sample page
-  - [ ] 3.2.2 Test Simplified Chinese sample page
-  - [ ] 3.2.3 Test mixed EN + Chinese page
+- [x] 3.1 Implement OCR wrapper (`ocr.py`)
+  - [x] 3.1.1 Initialise RapidOCR engine (load ONNX models once at startup)
+  - [x] 3.1.2 Accept `fitz.Pixmap` or PIL image as input
+  - [x] 3.1.3 Return list of `(text, bbox, confidence)` tuples, sorted top-to-bottom
+  - [x] 3.1.4 Support language hint: `en`, `ch_sim`, `ch_tra`, `auto`
+  - [x] 3.1.5 Handle OCR errors gracefully — log warning, return empty block for page
+- [x] 3.2 Verify CJK accuracy
+  - [x] 3.2.1 Test Traditional Chinese sample page
+  - [x] 3.2.2 Test Simplified Chinese sample page
+  - [x] 3.2.3 Test mixed EN + Chinese page
 
 ### Phase 4: Markdown Builder
 
-- [ ] 4.1 Implement heading inference (`builder.py`)
-  - [ ] 4.1.1 Collect all unique font sizes across the document
-  - [ ] 4.1.2 Map largest → H1, next → H2, etc. (up to H4; smaller sizes → paragraph)
-  - [ ] 4.1.3 Bold-only spans at paragraph font size → treat as H3 if no larger headings nearby
-- [ ] 4.2 Implement paragraph and list detection
-  - [ ] 4.2.1 Group consecutive text blocks by proximity (gap < line height = same paragraph)
-  - [ ] 4.2.2 Detect bullet patterns: `•`, `-`, `*`, `·`, `○`, `■`, CJK bullets
-  - [ ] 4.2.3 Detect numbered list patterns: `1.`, `（1）`, `①`, etc.
-  - [ ] 4.2.4 Indent nested lists based on `x0` left-margin offset
-- [ ] 4.3 Implement code block detection
-  - [ ] 4.3.1 Identify blocks where font name contains `Mono`, `Courier`, `Consolas`, `Menlo`, `Code`
-  - [ ] 4.3.2 Wrap detected regions in triple-backtick fenced blocks
-  - [ ] 4.3.3 Preserve internal whitespace and indentation exactly
-  - [ ] 4.3.4 Attempt language detection from preceding heading/label text
-- [ ] 4.4 Implement table detection (best-effort)
-  - [ ] 4.4.1 Detect grid-aligned text blocks that form rows and columns
-  - [ ] 4.4.2 Output as GFM table (`| col | col |` format)
-  - [ ] 4.4.3 Fall back to plain text block if table structure is ambiguous
-- [ ] 4.5 Implement image insertion
-  - [ ] 4.5.1 Sort extracted images by `y0` coordinate per page
-  - [ ] 4.5.2 Insert `![pageN_imgM](images/pageN_imgM.png)` at the correct position in the text flow
-- [ ] 4.6 Assemble full document Markdown
-  - [ ] 4.6.1 Concatenate all pages in order
-  - [ ] 4.6.2 Add horizontal rule (`---`) between pages (configurable, default: off)
-  - [ ] 4.6.3 Clean up excessive blank lines (collapse 3+ blank lines to 2)
+- [x] 4.1 Implement heading inference (`builder.py`)
+  - [x] 4.1.1 Collect all unique font sizes across the document
+  - [x] 4.1.2 Map largest → H1, next → H2, etc. (up to H4; smaller sizes → paragraph)
+  - [x] 4.1.3 Bold-only spans at paragraph font size → treat as H3 if no larger headings nearby
+- [x] 4.2 Implement paragraph and list detection
+  - [x] 4.2.1 Group consecutive text blocks by proximity (gap < line height = same paragraph)
+  - [x] 4.2.2 Detect bullet patterns: `•`, `-`, `*`, `·`, `○`, `■`, CJK bullets
+  - [x] 4.2.3 Detect numbered list patterns: `1.`, `（1）`, `①`, etc.
+  - [x] 4.2.4 Indent nested lists based on `x0` left-margin offset
+- [x] 4.3 Implement code block detection
+  - [x] 4.3.1 Identify blocks where font name contains `Mono`, `Courier`, `Consolas`, `Menlo`, `Code`
+  - [x] 4.3.2 Wrap detected regions in triple-backtick fenced blocks
+  - [x] 4.3.3 Preserve internal whitespace and indentation exactly
+  - [x] 4.3.4 Attempt language detection from preceding heading/label text
+- [x] 4.4 Implement table detection (best-effort)
+  - [x] 4.4.1 Detect grid-aligned text blocks that form rows and columns
+  - [x] 4.4.2 Output as GFM table (`| col | col |` format)
+  - [x] 4.4.3 Fall back to plain text block if table structure is ambiguous
+- [x] 4.5 Implement image insertion
+  - [x] 4.5.1 Sort extracted images by `y0` coordinate per page
+  - [x] 4.5.2 Insert `![pageN_imgM](images/pageN_imgM.png)` at the correct position in the text flow
+- [x] 4.6 Assemble full document Markdown
+  - [x] 4.6.1 Concatenate all pages in order
+  - [x] 4.6.2 Add horizontal rule (`---`) between pages (configurable, default: off)
+  - [x] 4.6.3 Clean up excessive blank lines (collapse 3+ blank lines to 2)
 
 ### Phase 5: Output Module
 
-- [ ] 5.1 Implement output writer (`output.py`)
-  - [ ] 5.1.1 Detect whether any images were extracted
-  - [ ] 5.1.2 If no images: write single `.md` file to output path
-  - [ ] 5.1.3 If images present and `--output-dir` not set: create `.zip` using `zipfile.ZipFile`
-    - [ ] Add `<name>.md` at zip root
-    - [ ] Add all images under `images/` inside the zip
-  - [ ] 5.1.4 If `--output-dir` is set: write `.md` and `images/` folder to the specified directory
-  - [ ] 5.1.5 Validate output path is writable before conversion starts (exit code `5` if not)
+- [x] 5.1 Implement output writer (`output.py`)
+  - [x] 5.1.1 Detect whether any images were extracted
+  - [x] 5.1.2 If no images: write single `.md` file to output path
+  - [x] 5.1.3 If images present and `--output-dir` not set: create `.zip` using `zipfile.ZipFile`
+    - [x] Add `<name>.md` at zip root
+    - [x] Add all images under `images/` inside the zip
+  - [x] 5.1.4 If `--output-dir` is set: write `.md` and `images/` folder to the specified directory
+  - [x] 5.1.5 Validate output path is writable before conversion starts (exit code `5` if not)
 
 ### Phase 6: CLI Implementation
 
-- [ ] 6.1 Implement CLI with `argparse` (`cli.py`)
-  - [ ] 6.1.1 Positional argument: `input` (PDF file path)
-  - [ ] 6.1.2 Optional: `-o, --output` (output `.md` or `.zip` path)
-  - [ ] 6.1.3 Optional: `--output-dir` (output to folder instead of ZIP)
-  - [ ] 6.1.4 Optional: `--min-image-size <WxH>` (default: `50x50`)
-  - [ ] 6.1.5 Optional: `--ocr-lang` (`en` / `ch_sim` / `ch_tra` / `auto`, default: `auto`)
-  - [ ] 6.1.6 Optional: `--skip-ocr` (text layer only, no OCR fallback)
-  - [ ] 6.1.7 Optional: `--verbose` / `--quiet`
-  - [ ] 6.1.8 Optional: `--version` / `--help`
-- [ ] 6.2 Implement exit codes (0–6 per Requirements)
-- [ ] 6.3 Implement actionable error messages
-  - [ ] 6.3.1 Missing PDF input → exit code `3`
-  - [ ] 6.3.2 Unreadable/corrupted PDF → exit code `3`
-  - [ ] 6.3.3 OCR model missing → exit code `6` with path hint
-  - [ ] 6.3.4 Output path not writable → exit code `5`
-  - [ ] 6.3.5 Conflicting `--output` + `--output-dir` flags → exit code `2`
+- [x] 6.1 Implement CLI with `argparse` (`cli.py`)
+  - [x] 6.1.1 Positional argument: `input` (PDF file path)
+  - [x] 6.1.2 Optional: `-o, --output` (output `.md` or `.zip` path)
+  - [x] 6.1.3 Optional: `--output-dir` (output to folder instead of ZIP)
+  - [x] 6.1.4 Optional: `--min-image-size <WxH>` (default: `50x50`)
+  - [x] 6.1.5 Optional: `--ocr-lang` (`en` / `ch_sim` / `ch_tra` / `auto`, default: `auto`)
+  - [x] 6.1.6 Optional: `--skip-ocr` (text layer only, no OCR fallback)
+  - [x] 6.1.7 Optional: `--verbose` / `--quiet`
+  - [x] 6.1.8 Optional: `--version` / `--help`
+- [x] 6.2 Implement exit codes (0–6 per Requirements)
+- [x] 6.3 Implement actionable error messages
+  - [x] 6.3.1 Missing PDF input → exit code `3`
+  - [x] 6.3.2 Unreadable/corrupted PDF → exit code `3`
+  - [x] 6.3.3 OCR model missing → exit code `6` with path hint
+  - [x] 6.3.4 Output path not writable → exit code `5`
+  - [x] 6.3.5 Conflicting `--output` + `--output-dir` flags → exit code `2`
 
 ### Phase 7: Testing & Validation
 

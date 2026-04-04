@@ -1,6 +1,8 @@
 """Package entry point for pdf2md."""
 
+import sys
+
 from pdf2md.cli import main
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
