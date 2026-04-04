@@ -209,4 +209,7 @@ __marimo__/
 # pdf2md specific
 *.zip
 *.md.out
-QWEN.md 
+QWEN.md
+
+# Claude Code local settings
+.claude/
