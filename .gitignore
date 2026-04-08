@@ -214,3 +214,6 @@ testdata/*.pdf
 
 # Claude Code local settings
 .claude/
+
+# Qwen Code local settings
+.qwen/
