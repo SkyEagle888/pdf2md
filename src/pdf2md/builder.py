@@ -364,7 +364,9 @@ class MarkdownBuilder:
                 self._stats.code_blocks_found += 1
                 # Try to detect language from preceding heading
                 lang = self._detect_code_language(parts)
-                code_text = "\n".join(b.text for b in paragraph_blocks)
+                # Only include monospace blocks in the code text
+                code_blocks = [b for b in paragraph_blocks if self._is_code_block(b)]
+                code_text = "\n".join(b.text for b in code_blocks)
                 if lang:
                     parts.append(f"```{lang}\n{code_text}\n```")
                 else:
@@ -668,10 +670,26 @@ class MarkdownBuilder:
         return any(kw in font_lower for kw in MONOSPACE_KEYWORDS)
 
     def _is_code_paragraph(self, blocks: list[TextBlock]) -> bool:
-        """Check if all blocks in a paragraph are code blocks."""
+        """Check if all blocks in a paragraph are code blocks.
+        
+        A paragraph is considered code if:
+        - All blocks are monospace, OR
+        - More than 50% of blocks are monospace (to handle headings grouped with code)
+        """
         if not blocks:
             return False
-        return all(self._is_code_block(b) for b in blocks)
+        
+        code_blocks = sum(1 for b in blocks if self._is_code_block(b))
+        
+        # All blocks are code
+        if code_blocks == len(blocks):
+            return True
+        
+        # More than 50% are code (handles heading + code scenario)
+        if code_blocks > len(blocks) * 0.5 and code_blocks >= 2:
+            return True
+        
+        return False
 
     def _detect_code_language(self, preceding_markdown: list[str]) -> str | None:
         """Attempt to detect code language from preceding heading/label text.

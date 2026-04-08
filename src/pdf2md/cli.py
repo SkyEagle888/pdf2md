@@ -288,7 +288,7 @@ def main(args: list[str] | None = None) -> int:
             f"{stats.lists_found} lists, "
             f"{stats.code_blocks_found} code blocks, "
             f"{stats.tables_found} tables, "
-            f"{stats.images_placed} images"
+            f"{stats.images_inserted} images"
         )
 
         # Step 5: Write output
@@ -297,13 +297,20 @@ def main(args: list[str] | None = None) -> int:
             output_dir=parsed_args.output_dir,
         )
 
-        # Validate output path
+        # Validate output path before conversion
         is_valid, error = writer.validate_output()
         if not is_valid:
             logger.error(f"Output not writable: {error}")
             return EXIT_OUTPUT_NOT_WRITABLE
 
-        output_path = writer.write(markdown, images, parsed_args.input)
+        try:
+            output_path = writer.write(markdown, images, parsed_args.input)
+        except PermissionError as e:
+            logger.error(f"Output not writable: {e}")
+            return EXIT_OUTPUT_NOT_WRITABLE
+        except OSError as e:
+            logger.error(f"Output not writable: {e}")
+            return EXIT_OUTPUT_NOT_WRITABLE
 
         # Log completion
         if output_path.is_file():

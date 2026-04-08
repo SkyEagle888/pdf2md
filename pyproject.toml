@@ -33,7 +33,7 @@ classifiers = [
 
 dependencies = [
     "pymupdf>=1.23",
-    "rapidocr-onnxruntime>=1.3",
+    "rapidocr-onnxruntime>=1.2",
     "pillow>=10.0",
 ]
 
