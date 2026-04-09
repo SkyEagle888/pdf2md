@@ -369,7 +369,7 @@ requires-dist = [
     { name = "pillow", specifier = ">=10.0" },
     { name = "pyinstaller", marker = "extra == 'dev'", specifier = ">=6.0" },
     { name = "pymupdf", specifier = ">=1.23" },
-    { name = "rapidocr-onnxruntime", specifier = ">=1.3" },
+    { name = "rapidocr-onnxruntime", specifier = ">=1.2" },
 ]
 provides-extras = ["dev"]
 
