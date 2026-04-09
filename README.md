@@ -2,44 +2,45 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/github/v/release/SkyEagle888/pdf2md)](https://github.com/SkyEagle888/pdf2md/releases)
 
 Convert PDF documents to Markdown with OCR support for both text-based and scanned PDFs.
 
 ## Features
 
-- **Dual-mode extraction**: Automatically detects text-based and scanned pages
+- **Dual-mode extraction**: Automatically detects text-based and scanned pages per-page
 - **OCR fallback**: Built-in RapidOCR engine for scanned pages (no internet required)
 - **CJK support**: Full support for Simplified Chinese, Traditional Chinese, and Japanese
 - **Image extraction**: Extracts embedded images with correct Markdown insertion points
 - **Smart formatting**: Infers headings, lists, code blocks, and tables from PDF layout
 - **Cross-platform**: Works on Windows, Linux, and macOS
-- **Standalone executable**: Single-file `.exe` for Windows with all dependencies bundled
+- **Standalone executable**: Single-file `.exe` for Windows with all dependencies bundled (future)
 
 ## Installation
 
-### Windows (Standalone Executable)
-
-Download the latest release from the [Releases page](https://github.com/pdf2md/pdf2md/releases) and extract `pdf2md.exe` to your preferred location.
-
-### Using pip
+### Using pip (Recommended for now)
 
 ```bash
-pip install pdf2md
+pip install .
 ```
 
 ### Using pipx (Recommended for CLI tools)
 
 ```bash
-pipx install pdf2md
+pipx install .
 ```
 
-### From Source
+### From Source (Development)
 
 ```bash
-git clone https://github.com/pdf2md/pdf2md.git
+git clone https://github.com/SkyEagle888/pdf2md.git
 cd pdf2md
 uv pip install -e .
 ```
+
+### Windows (Standalone Executable) — Coming Soon
+
+Download the latest release from the [Releases page](https://github.com/SkyEagle888/pdf2md/releases) and extract `pdf2md.exe` to your preferred location.
 
 ## Usage
 
@@ -47,16 +48,22 @@ uv pip install -e .
 
 ```bash
 # Convert a text-based PDF
-pdf2md document.pdf
+python -m pdf2md document.pdf
 
 # Convert with custom output path
-pdf2md document.pdf -o output.md
+python -m pdf2md document.pdf -o output.md
 
 # Convert a scanned PDF with Chinese text
-pdf2md scanned.pdf --ocr-lang ch_sim
+python -m pdf2md scanned.pdf --ocr-lang ch_sim
 
 # Convert and output to a directory (preserves images folder)
-pdf2md document.pdf --output-dir ./output/
+python -m pdf2md document.pdf --output-dir ./output/
+```
+
+After `pip install`, you can also use the `pdf2md` command directly:
+
+```bash
+pdf2md document.pdf
 ```
 
 ### CLI Options
@@ -136,7 +143,7 @@ output/
 | Traditional Chinese | `ch_tra` | Full CJK support |
 | Auto-detect | `auto` | Attempts to detect language |
 
-## Windows 11 Context Menu Integration
+## Windows 11 Context Menu Integration — Coming Soon
 
 Add "Convert to Markdown" to the right-click menu for PDF files:
 
@@ -144,6 +151,8 @@ Add "Convert to Markdown" to the right-click menu for PDF files:
 2. Edit `pdf2md.bat` and `pdf2md-windows.reg` with correct paths
 3. Run `reg import pdf2md-windows.reg` as Administrator
 4. Restart Windows Explorer
+
+*Note: Windows standalone executable and context menu integration are planned for a future release.*
 
 ## Troubleshooting
 
@@ -174,7 +183,24 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
+Contributions are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/SkyEagle888/pdf2md).
+
+### Development Setup
+
+```bash
+# Clone and set up development environment
+git clone https://github.com/SkyEagle888/pdf2md.git
+cd pdf2md
+
+# Create virtual environment and install
+uv pip install -e .
+
+# Generate test PDFs
+python scripts/create_test_pdfs.py
+
+# Run with verbose output
+python -m pdf2md testdata/text_en.pdf --verbose
+```
 
 ## Acknowledgments
 

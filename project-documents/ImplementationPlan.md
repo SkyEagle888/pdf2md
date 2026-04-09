@@ -112,12 +112,13 @@
 
 ### Phase 7: Testing & Validation
 
-- [ ] 7.1 Create test documents in `testdata/`
-  - [ ] `text_en.pdf` — text-based, English, includes a code block
-  - [ ] `text_cjk.pdf` — text-based, Traditional + Simplified Chinese
-  - [ ] `scanned_en.pdf` — scanned page, English
-  - [ ] `scanned_cjk.pdf` — scanned page, Chinese
-  - [ ] `mixed_images.pdf` — text-based with embedded images
+- [x] 7.1 Create test documents in `testdata/`
+  - [x] `text_en.pdf` — text-based, English, includes a code block
+  - [x] `text_cjk.pdf` — text-based, Traditional + Simplified Chinese
+  - [x] `scanned_en.pdf` — scanned page, English
+  - [x] `scanned_cjk.pdf` — scanned page, Chinese
+  - [x] `mixed_images.pdf` — text-based with embedded images
+  - [x] Test PDF generation script: `scripts/create_test_pdfs.py`
 - [ ] 7.2 Manual acceptance tests (per Requirements §7.2)
   - [ ] Text-based EN → correct headings, lists, code block
   - [ ] Text-based CJK → correct Chinese characters
@@ -132,9 +133,10 @@
 
 ### Phase 8: Windows Distribution
 
-- [ ] 8.1 Create PyInstaller hook (`hooks/hook-rapidocr.py`)
-  - [ ] Include RapidOCR ONNX model files in the bundle
-  - [ ] Include PyMuPDF font data
+- [x] 8.1 Create PyInstaller hook (`hooks/hook-rapidocr_onnxruntime.py`)
+  - [x] Include RapidOCR ONNX model files in the bundle
+  - [x] Include PyMuPDF font data
+  - [x] Renamed from `hook-rapidocr.py` to match package name for proper discovery
 - [ ] 8.2 Build Windows `.exe` with PyInstaller
   ```powershell
   pyinstaller --onefile --name pdf2md `
@@ -145,7 +147,7 @@
 - [ ] 8.3 Test `.exe` on a clean Windows 11 machine (no Python installed)
 - [ ] 8.4 Package as `pdf2md-win64.zip`
 - [ ] 8.5 Create GitHub release with `pdf2md-win64.zip` as a release asset
-- [ ] 8.6 Configure `hatch-vcs` for automatic versioning from Git tags
+- [x] 8.6 Configure `hatch-vcs` for automatic versioning from Git tags
 
 ### Phase 9: Windows 11 Context Menu
 
@@ -173,16 +175,16 @@
 
 ### Phase 10: Documentation
 
-- [ ] 10.1 Write `README.md` with:
-  - [ ] Feature overview and badges
-  - [ ] Installation (Windows `.exe`, Linux pipx/pip)
-  - [ ] CLI usage examples (text PDF, scanned PDF, images PDF, output-dir mode)
-  - [ ] All CLI options table
-  - [ ] Exit codes table
-  - [ ] Windows 11 context menu setup guide
-  - [ ] Supported languages
-  - [ ] Troubleshooting section
-- [ ] 10.2 Finalise `Requirements.md` and `ImplementationPlan.md`
+- [x] 10.1 Write `README.md` with:
+  - [x] Feature overview and badges
+  - [x] Installation (Windows `.exe`, Linux pipx/pip)
+  - [x] CLI usage examples (text PDF, scanned PDF, images PDF, output-dir mode)
+  - [x] All CLI options table
+  - [x] Exit codes table
+  - [x] Windows 11 context menu setup guide
+  - [x] Supported languages
+  - [x] Troubleshooting section
+- [x] 10.2 Finalise `Requirements.md` and `ImplementationPlan.md`
 
 ---
 
@@ -219,7 +221,7 @@ source = "vcs"
 
 ---
 
-## File Structure (Target)
+## File Structure (Current)
 
 ```
 pdf2md/
@@ -227,30 +229,26 @@ pdf2md/
 ├── uv.lock
 ├── .venv/
 ├── src/pdf2md/
-│   ├── __init__.py          # Dynamic version import
+│   ├── __init__.py          # Dynamic version import (hatch-vcs)
 │   ├── __main__.py          # Package entry point
-│   ├── cli.py               # CLI argument parsing and entry point
+│   ├── cli.py               # CLI argument parsing and main pipeline
 │   ├── analyser.py          # PDF page analysis (text vs. scan detection)
-│   ├── ocr.py               # RapidOCR wrapper
+│   ├── ocr.py               # RapidOCR-onnxruntime wrapper
 │   ├── images.py            # Image extraction from PDF
 │   ├── builder.py           # Markdown assembly (headings, lists, code, tables)
 │   └── output.py            # Output writer (.md single file or .zip bundle)
 ├── hooks/
-│   └── hook-rapidocr.py     # PyInstaller hook: bundle ONNX models
+│   └── hook-rapidocr_onnxruntime.py  # PyInstaller hook: bundle ONNX models
+├── scripts/
+│   └── create_test_pdfs.py           # Test PDF generation utility
 ├── assets/
-│   ├── pdf2md-logo.ico          # Windows icon for .exe
-│   ├── pdf2md-logo.png          # Logo image
-│   ├── pdf2md.bat               # Batch wrapper for Windows context menu
-│   └── pdf2md-windows.reg       # Windows 11 context menu registry file
-├── testdata/
-│   ├── text_en.pdf
-│   ├── text_cjk.pdf
-│   ├── scanned_en.pdf
-│   ├── scanned_cjk.pdf
-│   └── mixed_images.pdf
+│   └── .gitkeep                # Future: icons, logos, Windows registry files
+├── testdata/                   # Test PDF documents (gitignored)
+├── tests/                      # Test suite (future)
 ├── project-documents/
 │   ├── Requirements.md
-│   └── ImplementationPlan.md
+│   ├── ImplementationPlan.md
+│   └── Libraries.md
 └── README.md
 ```
 
@@ -327,7 +325,7 @@ PDF does not encode semantic heading levels — only visual font sizes. The stra
 ## Future Enhancements (Backlog)
 
 - [ ] Unit tests with pytest
-- [ ] CI/CD pipeline (GitHub Actions) — build and release on tag push
+- [ ] CI/CD pipeline (GitHub Actions) — build, test, and release on tag push
 - [ ] PyPI publishing for `pipx install pdf2md`
 - [ ] Marker integration as optional high-accuracy backend (for complex layouts)
 - [ ] Multi-column academic paper layout reflow
@@ -335,3 +333,6 @@ PDF does not encode semantic heading levels — only visual font sizes. The stra
 - [ ] Mermaid/SVG diagram pass-through
 - [ ] `--page-range` option to convert specific pages only
 - [ ] Batch mode: `pdf2md *.pdf --output-dir ./output/`
+- [ ] Windows PyInstaller build automation
+- [ ] Windows 11 context menu integration (Phase 9)
+- [ ] Manual acceptance testing (Phase 7.2-7.3)
