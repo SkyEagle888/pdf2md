@@ -14,7 +14,7 @@ Convert PDF documents to Markdown with OCR support for both text-based and scann
 - **Image extraction**: Extracts embedded images with correct Markdown insertion points
 - **Smart formatting**: Infers headings, lists, code blocks, and tables from PDF layout
 - **Cross-platform**: Works on Windows, Linux, and macOS
-- **Standalone executable**: Single-file `.exe` for Windows with all dependencies bundled (future)
+- **Standalone executable**: Single-file `.exe` for Windows with all dependencies bundled
 
 ## Installation
 
@@ -38,9 +38,20 @@ cd pdf2md
 uv pip install -e .
 ```
 
-### Windows (Standalone Executable) — Coming Soon
+### Windows (Standalone Executable)
 
 Download the latest release from the [Releases page](https://github.com/SkyEagle888/pdf2md/releases) and extract `pdf2md.exe` to your preferred location.
+
+No Python installation required -- all dependencies (PyMuPDF, RapidOCR, ONNX models) are bundled.
+
+#### Build from Source
+
+```bash
+git clone https://github.com/SkyEagle888/pdf2md.git
+cd pdf2md
+uv run pyinstaller pdf2md.spec --clean --noconfirm
+# Output: dist/pdf2md.exe
+```
 
 ## Usage
 
@@ -70,16 +81,16 @@ pdf2md document.pdf
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `input` | Input PDF file (required) | — |
+| `input` | Input PDF file (required) | -- |
 | `-o, --output` | Output `.md` or `.zip` file path | `<input_basename>.md` or `.zip` |
-| `--output-dir` | Output to folder instead of ZIP | — |
+| `--output-dir` | Output to folder instead of ZIP | -- |
 | `--min-image-size` | Min image size to extract (WxH) | `50x50` |
 | `--ocr-lang` | OCR language hint (`en`, `ch_sim`, `ch_tra`, `auto`) | `auto` |
 | `--skip-ocr` | Disable OCR fallback for scanned pages | Off |
 | `--verbose` | Enable debug logging and per-page progress | Off |
 | `--quiet` | Minimal output (errors only) | Off |
-| `--version` | Show version number | — |
-| `--help` | Show help message | — |
+| `--version` | Show version number | -- |
+| `--help` | Show help message | -- |
 
 ### Examples
 
@@ -104,22 +115,24 @@ When no images are extracted, outputs a single `.md` file.
 
 ### ZIP Archive
 When images are extracted, outputs a `.zip` containing:
+
 ```
 document.zip
-├── document.md
-└── images/
-    ├── page1_img1.png
-    ├── page1_img2.png
-    └── page3_img1.png
++-- document.md
++-- images/
+    +-- page1_img1.png
+    +-- page1_img2.png
+    +-- page3_img1.png
 ```
 
 ### Directory Output
 Use `--output-dir` to output unpacked files:
+
 ```
 output/
-├── document.md
-└── images/
-    └── ...
++-- document.md
++-- images/
+    +-- ...
 ```
 
 ## Exit Codes
@@ -143,7 +156,7 @@ output/
 | Traditional Chinese | `ch_tra` | Full CJK support |
 | Auto-detect | `auto` | Attempts to detect language |
 
-## Windows 11 Context Menu Integration — Coming Soon
+## Windows 11 Context Menu Integration -- Coming Soon
 
 Add "Convert to Markdown" to the right-click menu for PDF files:
 
@@ -151,8 +164,6 @@ Add "Convert to Markdown" to the right-click menu for PDF files:
 2. Edit `pdf2md.bat` and `pdf2md-windows.reg` with correct paths
 3. Run `reg import pdf2md-windows.reg` as Administrator
 4. Restart Windows Explorer
-
-*Note: Windows standalone executable and context menu integration are planned for a future release.*
 
 ## Troubleshooting
 
@@ -164,22 +175,25 @@ The RapidOCR ONNX models are missing. Reinstall the package or ensure you're usi
 
 ### Corrupted output with scanned PDFs
 Try specifying the OCR language explicitly:
+
 ```bash
 pdf2md scanned.pdf --ocr-lang ch_sim
 ```
 
 ### Images not appearing in output
+
 - Check that images meet the minimum size threshold (default: 50x50 px)
 - Use `--min-image-size 0x0` to extract all images
 - Verify the images folder is alongside the `.md` file when viewing
 
 ### Slow conversion on large PDFs
+
 - Use `--skip-ocr` if the PDF has a text layer
 - Reduce DPI or OCR language complexity
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License -- see [LICENSE](LICENSE) for details.
 
 ## Contributing
 
