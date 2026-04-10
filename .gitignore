@@ -219,3 +219,6 @@ testdata/*.pdf
 
 # Qwen Code local settings
 .qwen/
+
+# Local project notes (not for version control)
+project-documents/Issues.md
