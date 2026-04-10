@@ -91,6 +91,9 @@ _MIN_TABLE_ROWS = 2
 _MIN_TABLE_COLS = 2
 _TABLE_Y_TOLERANCE = 3.0  # pixels
 
+# Heading inference
+MIN_HEADING_SIZE_DIFF = 1.5  # minimum pt difference from body text to qualify as heading
+
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -271,6 +274,8 @@ class MarkdownBuilder:
 
         Collects all unique font sizes across TEXT pages, sorts them
         from largest to smallest, and maps the top sizes to H1-H4.
+        Only sizes meaningfully larger than body text (by at least
+        MIN_HEADING_SIZE_DIFF points) qualify as headings.
 
         Returns:
             Dict mapping font_size → heading_level (1-4)
@@ -290,11 +295,17 @@ class MarkdownBuilder:
         # Sort descending (largest first)
         sorted_sizes = sorted(font_sizes, reverse=True)
 
-        # Map top N sizes to heading levels
+        # The smallest size is body text — only map sizes sufficiently larger
+        body_size = sorted_sizes[-1]
+
         size_map: dict[float, int] = {}
-        for i, size in enumerate(sorted_sizes):
-            if i < self.max_heading_level:
-                size_map[size] = i + 1  # H1, H2, H3, H4
+        heading_level = 1
+        for size in sorted_sizes:
+            if heading_level > self.max_heading_level:
+                break
+            if (size - body_size) >= MIN_HEADING_SIZE_DIFF:
+                size_map[size] = heading_level
+                heading_level += 1
 
         return size_map
 
@@ -307,14 +318,19 @@ class MarkdownBuilder:
         Returns:
             Heading level (1-4) or None if not a heading
         """
+        # Never treat bullet/numbered lines as headings
+        if self._is_bullet(block.text) or self._is_numbered(block.text):
+            return None
+
         # Exact font size match
         if block.font_size in self._font_size_map:
             return self._font_size_map[block.font_size]
 
-        # Bold-only spans at paragraph font size → treat as H3
-        # if no larger headings are nearby (heuristic)
+        # Bold fallback — only apply to short lines (likely a real title)
         if block.is_bold and not block.is_italic:
-            return min(3, self.max_heading_level)
+            word_count = len(block.text.split())
+            if word_count <= 10:
+                return min(3, self.max_heading_level)
 
         return None
 
@@ -577,8 +593,8 @@ class MarkdownBuilder:
         if bullet_count == 0 and numbered_count == 0:
             return None
 
-        # Need at least 50% of blocks to match list patterns
-        if (bullet_count + numbered_count) < total * 0.5:
+        # Need at least 30% of blocks to match list patterns
+        if (bullet_count + numbered_count) < total * 0.3:
             return None
 
         # Calculate baseline x0 (minimum left margin)
@@ -671,24 +687,24 @@ class MarkdownBuilder:
 
     def _is_code_paragraph(self, blocks: list[TextBlock]) -> bool:
         """Check if all blocks in a paragraph are code blocks.
-        
+
         A paragraph is considered code if:
         - All blocks are monospace, OR
         - More than 50% of blocks are monospace (to handle headings grouped with code)
         """
         if not blocks:
             return False
-        
+
         code_blocks = sum(1 for b in blocks if self._is_code_block(b))
-        
+
         # All blocks are code
         if code_blocks == len(blocks):
             return True
-        
+
         # More than 50% are code (handles heading + code scenario)
         if code_blocks > len(blocks) * 0.5 and code_blocks >= 2:
             return True
-        
+
         return False
 
     def _detect_code_language(self, preceding_markdown: list[str]) -> str | None:
@@ -776,7 +792,7 @@ class MarkdownBuilder:
         if target_cols < _MIN_TABLE_COLS:
             return None
 
-        # Check that columns are roughly aligned by x-coordinate
+        # Check column alignment
         col_x_positions = self._compute_column_positions(rows, target_cols)
         if col_x_positions is None:
             return None

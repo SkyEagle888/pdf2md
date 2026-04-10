@@ -78,6 +78,15 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "--max-heading-level",
+        type=int,
+        default=4,
+        choices=[1, 2, 3, 4, 5, 6],
+        help="Maximum heading level to infer from font sizes (default: 4). "
+        "Use 2 for business documents to suppress ### and ####.",
+    )
+
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="Enable debug logging and per-page progress",
@@ -270,7 +279,7 @@ def main(args: list[str] | None = None) -> int:
         logger.info("  Building Markdown...")
         builder = MarkdownBuilder(
             add_page_breaks=False,
-            max_heading_level=4,
+            max_heading_level=parsed_args.max_heading_level,
         )
 
         if ocr_results:

@@ -153,8 +153,8 @@ class TestFontSizeMap:
 
         builder = MarkdownBuilder()
         result = builder._build_font_size_map(analysis)
-        assert 12.0 in result
-        assert result[12.0] == 1  # Only one size → H1
+        # Only one size -> it is body text -> no heading entries
+        assert result == {}
 
     def test_multiple_font_sizes(self):
         blocks = [
@@ -171,8 +171,9 @@ class TestFontSizeMap:
 
         assert result[24.0] == 1  # Largest → H1
         assert result[18.0] == 2  # Second → H2
-        assert result[12.0] == 3  # Third → H3
-        assert result[10.0] == 4  # Fourth → H4
+        assert result[12.0] == 3  # Third → H3 (diff from body 10.0 = 2.0 >= 1.5)
+        # 10.0 is body text (smallest), so not mapped to a heading
+        assert 10.0 not in result
 
     def test_max_heading_level_respected(self):
         blocks = [
@@ -195,7 +196,10 @@ class TestFontSizeMap:
         assert 12.0 not in result
 
     def test_scan_pages_excluded_from_font_map(self):
-        text_blocks = [_make_text_block("Text", font_size=14.0)]
+        text_blocks = [
+            _make_text_block("Title", font_size=20.0),
+            _make_text_block("Body", font_size=14.0),
+        ]
         pages = [
             _make_page_analysis(1, PageMode.TEXT, text_blocks),
             _make_page_analysis(2, PageMode.SCAN, []),
@@ -204,7 +208,9 @@ class TestFontSizeMap:
 
         builder = MarkdownBuilder()
         result = builder._build_font_size_map(analysis)
-        assert 14.0 in result
+        # 20.0 is 6pt above body (14.0) -> qualifies as heading
+        assert 20.0 in result
+        assert 14.0 not in result  # body text
         assert len(result) == 1
 
     def test_negative_font_size_excluded(self):
@@ -387,7 +393,9 @@ class TestListDetection:
         ]
         builder = MarkdownBuilder()
         result = builder._detect_and_build_list(blocks)
-        assert result is None  # Only 1/3 = 33% < 50%
+        # 33% >= 30% threshold, so a list is now detected
+        assert result is not None
+        assert "- Item 1" in result
 
     def test_empty_blocks(self):
         builder = MarkdownBuilder()
